@@ -3,12 +3,12 @@ from sklearn import preprocessing
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import make_scorer, accuracy_score
 from sklearn.model_selection import GridSearchCV
-# from keras.models import Sequential
-# from keras.layers import Dense
+from keras.models import Sequential
+from keras.layers import Dense
 
 
 def format_name(data):
-    #data['Surname'] = data.Name.apply(lambda x: x.split(' ')[0])
+    data['Surname'] = data.Name.apply(lambda x: x.split(' ')[0])
     data['NamePrefix'] = data.Name.apply(lambda x: x.split(' ')[1])
     return data
 
@@ -56,10 +56,6 @@ def transform_features(data):
     return data
 
 
-training_data = transform_features(pd.read_csv('data/train.csv'))
-test_data = transform_features(pd.read_csv('data/test.csv'))
-
-
 def encode_features(data1, data2, features):
     data_combined = pd.concat([data1[features], data2[features]])
     for feature in features:
@@ -70,70 +66,75 @@ def encode_features(data1, data2, features):
     return data1, data2
 
 
-training_data, test_data = encode_features(
-    training_data,
-    test_data,
-    ['NamePrefix', 'Sex', 'Age', 'Fare', 'Cabin', 'Embarked']
-)
+def prepare_data():
+    training_data = transform_features(pd.read_csv('data/train.csv'))
+    test_data = transform_features(pd.read_csv('data/test.csv'))
 
-X_train, y_train = training_data.drop('Survived', axis=1), training_data['Survived'].values
-X_test, y_test = test_data, pd.read_csv('data/survived.csv')['Survived'].values
+    training_data, test_data = encode_features(
+        training_data,
+        test_data,
+        ['NamePrefix', 'Surname', 'Sex', 'Age', 'Fare', 'Cabin', 'Embarked']
+    )
 
+    X_train, y_train = training_data.drop('Survived', axis=1), training_data.Survived
+    X_test, y_test = test_data, pd.read_csv('data/survived.csv').Survived
 
-##########################################
-# Random forest = right for this problem #
-##########################################
-
-clf = RandomForestClassifier()
-
-parameters = {
-    'n_estimators': [4, 6, 9],
-    'max_features': ['log2', 'sqrt','auto'],
-    'criterion': ['entropy', 'gini'],
-    'max_depth': [2, 3, 5, 10],
-    'min_samples_split': [2, 3, 5],
-    'min_samples_leaf': [1, 5, 8]
-}
-
-acc_scorer = make_scorer(accuracy_score)
-
-grid_obj = GridSearchCV(clf, parameters, scoring=acc_scorer)
-grid_obj = grid_obj.fit(X_train, y_train)
-
-clf = grid_obj.best_estimator_
-
-clf.fit(X_train, y_train)
-
-predictions = clf.predict(X_test)
-print(accuracy_score(y_test, predictions))
+    return X_train, y_train, X_test, y_test
 
 
-#############################
-# Neural Net = bad approach #
-#############################
+def random_forest(X_train, y_train, X_test, y_test):
+    clf = RandomForestClassifier()
 
-# X_train = preprocessing.scale(X_train)
-# y_train = y_train.reshape(y_train.size, 1)
-# y_test = y_test.reshape(y_test.size, 1)
-#
-# print(X_train.shape, y_train.shape)
-#
-# model = Sequential([
-#     Dense(400, activation='relu', input_dim=X_train.shape[1]),
-#     Dense(200, activation='relu'),
-#     Dense(100, activation='relu'),
-#     Dense(1, activation='sigmoid')
-# ])
-#
-# model.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics=['accuracy'])
-#
-# epochs = 10
-# batch_size = 10
-#
-# model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size)
-#
-# print(model.predict(X_test))
-#
-# score, acc = model.evaluate(X_test, y_test, batch_size=batch_size)
-#
-# print(acc)
+    parameters = {
+        'n_estimators': [4, 6, 9],
+        'max_features': ['log2', 'sqrt','auto'],
+        'criterion': ['entropy', 'gini'],
+        'max_depth': [2, 3, 5, 10],
+        'min_samples_split': [2, 3, 5],
+        'min_samples_leaf': [1, 5, 8]
+    }
+
+    acc_scorer = make_scorer(accuracy_score)
+
+    grid_obj = GridSearchCV(clf, parameters, scoring=acc_scorer)
+    grid_obj = grid_obj.fit(X_train, y_train)
+
+    clf = grid_obj.best_estimator_
+
+    clf.fit(X_train, y_train)
+
+    predictions = clf.predict(X_test)
+
+    print(accuracy_score(y_test, predictions))
+
+
+def neural_net(X_train, y_train, X_test, y_test):
+    y_train, y_test = y_train.values, y_test.values
+
+    X_train = preprocessing.scale(X_train)
+    y_train = y_train.reshape(y_train.size, 1)
+    y_test = y_test.reshape(y_test.size, 1)
+
+    print(X_train.shape, y_train.shape)
+
+    model = Sequential([
+        Dense(400, activation='relu', input_dim=X_train.shape[1]),
+        Dense(200, activation='relu'),
+        Dense(100, activation='relu'),
+        Dense(1, activation='sigmoid')
+    ])
+
+    model.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics=['accuracy'])
+
+    epochs = 10
+    batch_size = 10
+
+    model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size)
+
+    score, acc = model.evaluate(X_test, y_test, batch_size=batch_size)
+
+    print(acc)
+
+
+if __name__ == '__main__':
+    random_forest(*prepare_data())
