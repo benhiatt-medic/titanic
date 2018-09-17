@@ -1,7 +1,10 @@
 import pandas as pd
 from sklearn import preprocessing
-from keras.models import Sequential
-from keras.layers import Dense
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import make_scorer, accuracy_score
+from sklearn.model_selection import GridSearchCV
+# from keras.models import Sequential
+# from keras.layers import Dense
 
 
 def format_name(data):
@@ -76,28 +79,61 @@ training_data, test_data = encode_features(
 X_train, y_train = training_data.drop('Survived', axis=1), training_data['Survived'].values
 X_test, y_test = test_data, pd.read_csv('data/survived.csv')['Survived'].values
 
-X_train = preprocessing.scale(X_train)
-y_train = y_train.reshape(y_train.size, 1)
-y_test = y_test.reshape(y_test.size, 1)
 
-print(X_train.shape, y_train.shape)
+##########################################
+# Random forest = right for this problem #
+##########################################
 
-model = Sequential([
-    Dense(400, activation='relu', input_dim=X_train.shape[1]),
-    Dense(200, activation='relu'),
-    Dense(100, activation='relu'),
-    Dense(1, activation='sigmoid')
-])
+clf = RandomForestClassifier()
 
-model.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics=['accuracy'])
+parameters = {
+    'n_estimators': [4, 6, 9],
+    'max_features': ['log2', 'sqrt','auto'],
+    'criterion': ['entropy', 'gini'],
+    'max_depth': [2, 3, 5, 10],
+    'min_samples_split': [2, 3, 5],
+    'min_samples_leaf': [1, 5, 8]
+}
 
-epochs = 10
-batch_size = 10
+acc_scorer = make_scorer(accuracy_score)
 
-model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size)
+grid_obj = GridSearchCV(clf, parameters, scoring=acc_scorer)
+grid_obj = grid_obj.fit(X_train, y_train)
 
-print(model.predict(X_test))
+clf = grid_obj.best_estimator_
 
-score, acc = model.evaluate(X_test, y_test, batch_size=batch_size)
+clf.fit(X_train, y_train)
 
-print(acc)
+predictions = clf.predict(X_test)
+print(accuracy_score(y_test, predictions))
+
+
+#############################
+# Neural Net = bad approach #
+#############################
+
+# X_train = preprocessing.scale(X_train)
+# y_train = y_train.reshape(y_train.size, 1)
+# y_test = y_test.reshape(y_test.size, 1)
+#
+# print(X_train.shape, y_train.shape)
+#
+# model = Sequential([
+#     Dense(400, activation='relu', input_dim=X_train.shape[1]),
+#     Dense(200, activation='relu'),
+#     Dense(100, activation='relu'),
+#     Dense(1, activation='sigmoid')
+# ])
+#
+# model.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics=['accuracy'])
+#
+# epochs = 10
+# batch_size = 10
+#
+# model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size)
+#
+# print(model.predict(X_test))
+#
+# score, acc = model.evaluate(X_test, y_test, batch_size=batch_size)
+#
+# print(acc)
