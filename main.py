@@ -105,7 +105,16 @@ def random_forest(X_train, y_train, X_test, y_test):
 
     predictions = clf.predict(X_test)
 
-    print(accuracy_score(y_test, predictions))
+    acc = accuracy_score(y_test, predictions)
+
+    print(acc)
+
+    with open('submission.csv', 'w') as f:
+        f.write('PassengerId,Survived\n')
+        passengerId = 892
+        for prediction in predictions:
+            f.write(','.join((str(passengerId), str(prediction))) + '\n')
+            passengerId += 1
 
 
 def neural_net(X_train, y_train, X_test, y_test):
