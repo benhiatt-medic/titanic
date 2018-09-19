@@ -17,7 +17,7 @@ def test_sizes_equivalent():
     assert X_test.shape[0] == y_test.shape[0]
 
     for X in X_train, X_test:
-        assert X.shape[1] == 10
+        assert X.shape[1] == 12
 
 
 def test_columns_equivalent():

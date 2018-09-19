@@ -9,6 +9,17 @@ from keras.layers import Dense
 
 def format_name(data):
     data['Surname'] = data.Name.apply(lambda x: x.split(' ')[0])
+    global survived, died
+    if 'Survived' in data:
+        survived = {surname: 0 for surname in data.Surname}
+        died = {surname: 0 for surname in data.Surname}
+        for i, row in data.iterrows():
+            if row.Survived:
+                survived[row.Surname] += 1
+            else:
+                died[row.Surname] += 1
+    data['OneSurvived'] = data.Surname.apply(lambda x: 'Y' if x in survived and survived[x] else 'U')
+    data['OneDied'] = data.Surname.apply(lambda x: 'Y' if x in died and died[x] else 'U')
     data['NamePrefix'] = data.Name.apply(lambda x: x.split(' ')[1])
     return data
 
@@ -73,7 +84,7 @@ def prepare_data():
     training_data, test_data = encode_features(
         training_data,
         test_data,
-        ['NamePrefix', 'Surname', 'Sex', 'Age', 'Fare', 'Cabin', 'Embarked']
+        ['NamePrefix', 'Surname', 'OneSurvived', 'OneDied', 'Sex', 'Age', 'Fare', 'Cabin', 'Embarked']
     )
 
     X_train, y_train = training_data.drop('Survived', axis=1), training_data.Survived
@@ -101,6 +112,8 @@ def random_forest(X_train, y_train, X_test, y_test):
 
     clf = grid_obj.best_estimator_
 
+    # acc = 0
+    # while acc < 0.8:
     clf.fit(X_train, y_train)
 
     predictions = clf.predict(X_test)
