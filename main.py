@@ -8,6 +8,14 @@ from keras.layers import Dense
 
 
 def format_name(data):
+    """Modifies the dataframe by adding useful features based on passenger name.
+
+        Args:
+            data: a pandas dataframe of the titanic data
+
+        Returns:
+            the modified dataframe with 'Surname', 'OneSurvived', 'OneDied', and 'NamePrefix' fields added
+    """
     data['Surname'] = data.Name.apply(lambda x: x.split(' ')[0])
     global survived, died
     if 'Survived' in data:
@@ -25,6 +33,14 @@ def format_name(data):
 
 
 def simplify_ages(data):
+    """Modifies the dataframe by grouping the values of the continuous variable 'Age' into 8 discrete categories.
+
+            Args:
+                data: a pandas dataframe of the titanic data
+
+            Returns:
+                the modified dataframe with its 'Age' values simplified
+    """
     data.Age = data.Age.fillna(-0.5)
     bins = (-1, 0, 5, 12, 18, 25, 35, 60, 120)
     group_names = ['Unknown', 'Baby', 'Child', 'Teenager', 'Student', 'Young Adult', 'Adult', 'Senior']
@@ -34,6 +50,14 @@ def simplify_ages(data):
 
 
 def simplify_fares(data):
+    """Modifies the dataframe by grouping the values of the continuous variable 'Fares' into quartiles.
+
+            Args:
+                data: a pandas dataframe of the titanic data
+
+            Returns:
+                the modified dataframe with its 'Fare' values simplified
+    """
     data.Fare = data.Fare.fillna(-0.5)
     bins = (-1, 0, 8, 15, 31, 1000)
     group_names = ['Unknown', '1_quartile', '2_quartile', '3_quartile', '4_quartile']
@@ -43,21 +67,53 @@ def simplify_fares(data):
 
 
 def simplify_cabins(data):
-    data.Cabin = data.Cabin.fillna('N')
+    """Modifies the dataframe by retaining only the cabin's deck identifier to avoid overfitting.
+
+            Args:
+                data: a pandas dataframe of the titanic data
+
+            Returns:
+                the modified dataframe with its 'Cabin' values simplified
+    """
+    data.Cabin = data.Cabin.fillna('U')
     data.Cabin = data.Cabin.apply(lambda x: x[0])
     return data
 
 
 def fill_embarked(data):
-    data.Embarked = data.Embarked.fillna('N')
+    """Modifies the dataframe by filling unknown ports of departure with a placeholder.
+
+            Args:
+                data: a pandas dataframe of the titanic data
+
+            Returns:
+                the modified dataframe with its missing 'Embarked' values filled
+    """
+    data.Embarked = data.Embarked.fillna('U')
     return data
 
 
 def drop_features(data):
+    """Modifies the dataframe by removing the features that aren't useful to avoid overfitting.
+
+            Args:
+                data: a pandas dataframe of the titanic data
+
+            Returns:
+                the modified dataframe with its 'PassengerId', 'Name', and 'Ticket' fields removed
+    """
     return data.drop(['PassengerId', 'Name', 'Ticket'], axis=1)
 
 
 def transform_features(data):
+    """Modifies the dataframe by applying all of the above transformations.
+
+            Args:
+                data: a pandas dataframe of the titanic data
+
+            Returns:
+                the modified dataframe
+    """
     data = format_name(data)
     data = simplify_ages(data)
     data = simplify_fares(data)
@@ -68,6 +124,16 @@ def transform_features(data):
 
 
 def encode_features(data1, data2, features):
+    """Modifies the dataframe by encoding the categorical features into numerical features.
+
+            Args:
+                data1: the pandas dataframe of the titanic data for training
+                data2: the pandas dataframe of the titanic data for prediction
+                features: a list of the categorical features to be encoded
+
+            Returns:
+                the modified dataframes
+    """
     data_combined = pd.concat([data1[features], data2[features]])
     for feature in features:
         le = preprocessing.LabelEncoder()
@@ -78,6 +144,11 @@ def encode_features(data1, data2, features):
 
 
 def prepare_data():
+    """Reads the titanic training and prediction data into pandas dataframes and applies transformations and encoding.
+
+            Returns:
+                training and prediction data, each divided into input and expected output for training a model
+    """
     training_data = transform_features(pd.read_csv('data/train.csv'))
     test_data = transform_features(pd.read_csv('data/test.csv'))
 
@@ -94,6 +165,14 @@ def prepare_data():
 
 
 def random_forest(X_train, y_train, X_test, y_test):
+    """Creates and fits a random forest classifier to the training data, then writes its predictions to a file
+
+            Args:
+                X_train: input data to train the classifier with
+                y_train: expected output to train the classifier with
+                X_test: input data to make predictions from
+                y_test: expected output
+    """
     clf = RandomForestClassifier()
 
     parameters = {
@@ -131,6 +210,14 @@ def random_forest(X_train, y_train, X_test, y_test):
 
 
 def neural_net(X_train, y_train, X_test, y_test):
+    """Creates and trains a neural network with the training data, then writes its predictions to a file
+
+            Args:
+                X_train: input data to train the network with
+                y_train: expected output to train the network with
+                X_test: input data to make predictions from
+                y_test: expected output
+    """
     y_train, y_test = y_train.values, y_test.values
 
     X_train = preprocessing.scale(X_train)

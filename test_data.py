@@ -6,6 +6,7 @@ import math
 
 
 def setup_module():
+    """Initializes the training and prediction data to be tested."""
     global training_data, test_data, X_train, y_train, X_test, y_test
     training_data = main.transform_features(pd.read_csv('data/train.csv')).drop('Survived', axis=1)
     test_data = main.transform_features(pd.read_csv('data/test.csv'))
@@ -13,6 +14,7 @@ def setup_module():
 
 
 def test_sizes_equivalent():
+    """Input and output for a set of data should have the same number of rows. Input data should have 12 features."""
     assert X_train.shape[0] == y_train.shape[0]
     assert X_test.shape[0] == y_test.shape[0]
 
@@ -21,6 +23,7 @@ def test_sizes_equivalent():
 
 
 def test_columns_equivalent():
+    """The fields of the input data should be identical."""
     for col in X_train:
         assert col in X_test
 
@@ -29,6 +32,7 @@ def test_columns_equivalent():
 
 
 def test_none():
+    """There should be no empty values in any processed data."""
     for col in X_train:
         for e in X_train[col]:
             assert e is not None
@@ -44,6 +48,8 @@ def test_none():
 
 @pytest.mark.xfail
 def test_surnames():
+    """Every row should have a surname that is not blank.
+    Raw and encoded input data should have the same number of distinct surnames."""
     for surname in training_data.Surname:
         assert len(surname) != 0
 
@@ -56,6 +62,8 @@ def test_surnames():
 
 @pytest.mark.xfail
 def test_prefixes():
+    """Every row should have a name prefix that is not blank.
+    Raw and encoded input data should have the same number of distinct name prefix values."""
     for prefix in training_data.NamePrefix:
         assert len(prefix) != 0
 
@@ -67,16 +75,20 @@ def test_prefixes():
 
 
 def test_ages():
+    """Raw and encoded input data should have the same number of distinct Age values as the number of age categories."""
     assert len(set(X_train.Age)) == len(set(training_data.Age)) == len(['Unknown', 'Baby', 'Child', 'Teenager', 'Student', 'Young Adult', 'Adult', 'Senior'])
     assert len(set(X_test.Age)) == len(set(test_data.Age)) == len(['Unknown', 'Baby', 'Child', 'Teenager', 'Student', 'Young Adult', 'Adult', 'Senior'])
 
 
 def test_fares():
+    """Raw and encoded input data should have the same number of distinct Fare values as the number of fare categories."""
     assert len(set(X_train.Fare)) == len(set(training_data.Fare)) == 5
     assert len(set(X_test.Fare)) == len(set(test_data.Fare)) == 5
 
 
 def test_cabins():
+    """Raw Cabin values should be characters.
+    Raw and encoded input data should have the same number of distinct Cabin values."""
     for cabin in training_data.Cabin:
         assert cabin.isalpha()
 
@@ -88,6 +100,8 @@ def test_cabins():
 
 
 def test_embarked():
+    """Raw port values should be certain characters.
+    Raw and encoded input data should have the same number of distinct port values."""
     for port in training_data.Embarked:
         assert port in ('C', 'N', 'Q', 'S')
 
@@ -99,12 +113,14 @@ def test_embarked():
 
 
 def test_dropped():
+    """Dropped fields should not be in the processed data."""
     for col in ('PassengerId', 'Name', 'Ticket'):
         assert col not in X_train
         assert col not in X_test
 
 
 def test_nan():
+    """There should be no Nan values in any processed data."""
     for col in X_train:
         for e in X_train[col]:
             assert not math.isnan(e)
@@ -119,5 +135,6 @@ def test_nan():
 
 
 def teardown_module():
+    """Delete the data variables."""
     global training_data, test_data, X_train, y_train, X_test, y_test
     del training_data, test_data, X_train, y_train, X_test, y_test
